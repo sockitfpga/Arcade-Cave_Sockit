@@ -55,11 +55,19 @@ class VideoSys extends Module {
   })
 
   val timing = withClockAndReset(io.videoClock, io.videoReset) {
-    // Video timings
+    // Original video timing
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
-    val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
+    originalVideoTiming.io.display := UVec2(320.U, 240.U)
+    originalVideoTiming.io.frontPorch := UVec2(36.U, 12.U)
+    originalVideoTiming.io.retrace := UVec2(20.U, 2.U)
 
-    // Changing the analog video offset during the display region can momentarily alter the screen
+    // Compatibility video timing
+    val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
+    compatibilityVideoTiming.io.display := UVec2(320.U, 240.U)
+    compatibilityVideoTiming.io.frontPorch := UVec2(30.U, 12.U)
+    compatibilityVideoTiming.io.retrace := UVec2(20.U, 2.U)
+
+    // Changing the CRT offset during the display region can momentarily alter the screen
     // dimensions, which may cause issues with other modules. If we latch the offset during a
     // vertical sync, then we can avoid causing any problems.
     originalVideoTiming.io.offset := RegEnable(io.options.offset, originalVideoTiming.io.timing.vSync)
