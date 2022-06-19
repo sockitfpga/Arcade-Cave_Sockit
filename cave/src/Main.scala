@@ -100,6 +100,10 @@ class Main extends Module {
   val dipsRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.DIPS_REGS_DEPTH))
   dipsRegs.io.mem <> io.ioctl.dips.mapAddr { a => (a >> 1).asUInt }.asReadWriteMemIO // convert from byte address
 
+  // Connect IOCTL to video register file
+  val videoRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.VIDEO_REGS_DEPTH))
+  videoRegs.io.mem <> io.ioctl.video.mapAddr { a => (a >> 1).asUInt }.asReadWriteMemIO // convert from byte address
+
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
   ddr.io.ddr <> io.ddr

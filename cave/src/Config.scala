@@ -66,6 +66,8 @@ object Config {
 
   /** The depth of the DIPs register file */
   val DIPS_REGS_DEPTH = 4
+  /** The depth of the video register file */
+  val VIDEO_REGS_DEPTH = 4
 
   /** The width of the pulse generated when a coin is inserted */
   val COIN_PULSE_WIDTH = (100000000D / CLOCK_PERIOD).ceil.toInt // 100ms
