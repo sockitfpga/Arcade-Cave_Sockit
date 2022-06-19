@@ -39,6 +39,7 @@ import arcadia.mem.ddr.DDR
 import arcadia.mem.sdram.{SDRAM, SDRAMIO}
 import arcadia.mister._
 import cave.fb._
+import cave.gfx.VideoRegs
 import chisel3._
 import chisel3.experimental.FlatIO
 import chisel3.stage._
@@ -97,12 +98,8 @@ class Main extends Module {
   }
 
   // Connect IOCTL to DIPs register file
-  val dipsRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.DIPS_REGS_DEPTH))
+  val dipsRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.DIPS_REGS_COUNT))
   dipsRegs.io.mem <> io.ioctl.dips.mapAddr { a => (a >> 1).asUInt }.asReadWriteMemIO // convert from byte address
-
-  // Connect IOCTL to video register file
-  val videoRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.VIDEO_REGS_DEPTH))
-  videoRegs.io.mem <> io.ioctl.video.mapAddr { a => (a >> 1).asUInt }.asReadWriteMemIO // convert from byte address
 
   // DDR controller
   val ddr = Module(new DDR(Config.ddrConfig))
@@ -123,6 +120,7 @@ class Main extends Module {
   val videoSys = Module(new VideoSys)
   videoSys.io.videoClock := io.videoClock
   videoSys.io.videoReset := io.videoReset
+  videoSys.io.ioctl <> io.ioctl
   videoSys.io.options <> io.options
   videoSys.io.video <> io.video
 

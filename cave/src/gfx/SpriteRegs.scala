@@ -70,7 +70,7 @@ object SpriteRegs {
    *
    * @param data The sprite registers data.
    */
-  def decode(data: Vec[Bits]): SpriteRegs = {
+  def decode[T <: Bits](data: Vec[T]): SpriteRegs = {
     val regs = Wire(new SpriteRegs)
     regs.flipX := data(0)(15)
     regs.flipY := data(1)(15)

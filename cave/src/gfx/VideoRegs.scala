@@ -33,59 +33,43 @@
 package cave.gfx
 
 import arcadia.UVec2
-import cave.Config
 import chisel3._
 
-/** A bundle that contains the decoded layer registers. */
-class LayerRegs extends Bundle {
-  /** Priority */
-  val priority = UInt(Config.PRIO_WIDTH.W)
-  /** Tile size (8x8 or 16x16) */
-  val tileSize = Bool()
-  /** Enable flag */
-  val enable = Bool()
-  /** Horizontal flip */
-  val flipX = Bool()
-  /** Vertical flip */
-  val flipY = Bool()
-  /** Row scroll enable */
-  val rowScrollEnable = Bool()
-  /** Row select enable */
-  val rowSelectEnable = Bool()
-  /** Scroll position */
-  val scroll = UVec2(Config.LAYER_SCROLL_WIDTH.W)
+/** A bundle that contains the video registers. */
+class VideoRegs extends Bundle {
+  /** Display region */
+  val display = UVec2(9.W)
+  /** Front porch region */
+  val frontPorch = UVec2(9.W)
+  /** Retrace region */
+  val retrace = UVec2(9.W)
 }
 
-object LayerRegs {
+object VideoRegs {
   /**
-   * Decodes the layer registers from the given data.
+   * Decodes the video registers from the given data.
    *
    * {{{
    * word   bits                  description
    * -----+-fedc-ba98-7654-3210-+----------------
-   *    0 | x--- ---- ---- ---- | flip x
-   *      | -x-- ---- ---- ---- | row scroll enable
-   *      | ---- ---x xxxx xxxx | scroll x
-   *    1 | x--- ---- ---- ---- | flip y
-   *      | -x-- ---- ---- ---- | row select enable
-   *      | --x- ---- ---- ---- | tile size
-   *      | ---- ---x xxxx xxxx | scroll y
-   *    2 | ---- ---- ---x ---- | enable
-   *      | ---- ---- ---- --xx | priority
+   *    0 | ---- ---x xxxx xxxx | display x
+   *    1 | ---- ---x xxxx xxxx | display y
+   *    2 | ---- ---x xxxx xxxx | front porch x
+   *    3 | ---- ---x xxxx xxxx | front porch y
+   *    4 | ---- ---x xxxx xxxx | retrace x
+   *    5 | ---- ---x xxxx xxxx | retrace y
    * }}}
    *
-   * @param data The layer registers data.
+   * @param data The video registers data.
    */
-  def decode[T <: Bits](data: Vec[T]): LayerRegs = {
-    val regs = Wire(new LayerRegs)
-    regs.priority := data(2)(1, 0)
-    regs.tileSize := data(1)(13)
-    regs.enable := !data(2)(4)
-    regs.flipX := !data(0)(15)
-    regs.flipY := !data(1)(15)
-    regs.rowScrollEnable := data(0)(14)
-    regs.rowSelectEnable := data(1)(14)
-    regs.scroll := UVec2(data(0)(8, 0), data(1)(8, 0))
+  def decode[T <: Bits](data: Vec[T]): VideoRegs = {
+    val regs = Wire(new VideoRegs)
+    regs.display.x := data(0)(8, 0)
+    regs.display.y := data(1)(8, 0)
+    regs.frontPorch.x := data(2)(8, 0)
+    regs.frontPorch.y := data(3)(8, 0)
+    regs.retrace.x := data(4)(8, 0)
+    regs.retrace.y := data(5)(8, 0)
     regs
   }
 }

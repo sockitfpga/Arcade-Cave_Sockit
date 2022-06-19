@@ -34,7 +34,9 @@ package cave
 
 import arcadia._
 import arcadia.gfx._
-import arcadia.mister.OptionsIO
+import arcadia.mem.RegisterFile
+import arcadia.mister._
+import cave.gfx._
 import chisel3._
 import chisel3.util._
 
@@ -48,18 +50,36 @@ class VideoSys extends Module {
     val videoClock = Input(Clock())
     /** Video reset */
     val videoReset = Input(Bool())
+    /** IOCTL port */
+    val ioctl = IOCTL()
     /** Options port */
     val options = OptionsIO()
     /** Video port */
     val video = VideoIO()
   })
 
+  val videoDownloaded = Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.VIDEO_INDEX.U
+
+  val changeMode = videoDownloaded || (io.options.compatibility ^ RegNext(io.options.compatibility))
+
+  // Latch video registers after they have been downloaded
+  val latchVideoRegs = Util.latchSync(videoDownloaded)
+
+  // Connect IOCTL to video register file
+  val registerFile = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.VIDEO_REGS_COUNT))
+  registerFile.io.mem <> io.ioctl.video
+    .mapAddr { a => (a >> 1).asUInt } // convert from byte address
+    .mapData { a => a(7, 0) ## a(15, 8) } // swap words
+    .asReadWriteMemIO
+
+  // Video timing runs in the video clock domain
   val timing = withClockAndReset(io.videoClock, io.videoReset) {
     // Original video timing
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
-    originalVideoTiming.io.display := UVec2(320.U, 240.U)
-    originalVideoTiming.io.frontPorch := UVec2(36.U, 12.U)
-    originalVideoTiming.io.retrace := UVec2(20.U, 2.U)
+    val videoRegs = RegEnable(VideoRegs.decode(registerFile.io.regs), VideoSys.DEFAULT_REGS, latchVideoRegs)
+    originalVideoTiming.io.display := videoRegs.display
+    originalVideoTiming.io.frontPorch := videoRegs.frontPorch
+    originalVideoTiming.io.retrace := videoRegs.retrace
 
     // Compatibility video timing
     val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
@@ -89,7 +109,7 @@ class VideoSys extends Module {
   video.reset := io.videoReset
   video.clockEnable := timing.clockEnable
   video.displayEnable := timing.displayEnable
-  video.changeMode := io.options.compatibility ^ RegNext(io.options.compatibility)
+  video.changeMode := changeMode
   video.pos := timing.pos
   video.hSync := timing.hSync
   video.vSync := timing.vSync
@@ -98,4 +118,9 @@ class VideoSys extends Module {
 
   // Outputs
   io.video <> video
+}
+
+object VideoSys {
+  /** Default video register values */
+  val DEFAULT_REGS = VideoRegs.decode(VecInit(320.U, 240.U, 36.U, 12.U, 20.U, 2.U, 0.U, 0.U))
 }
