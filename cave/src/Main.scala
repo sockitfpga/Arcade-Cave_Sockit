@@ -153,7 +153,6 @@ class Main extends Module {
   systemFrameBuffer.io.enable := io.options.frameBufferEnable.system && memSys.io.ready
   systemFrameBuffer.io.rotate := io.options.rotate
   systemFrameBuffer.io.forceBlank := !memSys.io.ready
-  systemFrameBuffer.io.videoRegs <> videoSys.io.regs
   systemFrameBuffer.io.video <> videoSys.io.video
   systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
   systemFrameBuffer.io.frameBuffer <> cave.io.systemFrameBuffer

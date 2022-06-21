@@ -33,7 +33,7 @@
 package cave.fb
 
 import arcadia._
-import arcadia.gfx.{VideoIO, VideoRegs}
+import arcadia.gfx.VideoIO
 import arcadia.mem.BurstWriteMemIO
 import arcadia.mister.FrameBufferCtrlIO
 import cave._
@@ -63,8 +63,6 @@ class SystemFrameBuffer extends Module {
     val rotate = Input(Bool())
     /** Disable the frame buffer output */
     val forceBlank = Input(Bool())
-    /** Video registers */
-    val videoRegs = Input(new VideoRegs)
     /** Video port */
     val video = Flipped(VideoIO())
     /** Frame buffer control port */
@@ -84,8 +82,8 @@ class SystemFrameBuffer extends Module {
 
   // Configure the MiSTer frame buffer
   io.frameBufferCtrl.configure(
-    width = io.videoRegs.display.x,
-    height = io.videoRegs.display.y,
+    width = io.video.regs.display.x,
+    height = io.video.regs.display.y,
     baseAddr = pageFlipper.io.addrRead,
     enable = io.enable,
     rotate = io.rotate,

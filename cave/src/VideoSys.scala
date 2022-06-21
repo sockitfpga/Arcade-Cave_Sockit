@@ -53,8 +53,6 @@ class VideoSys extends Module {
     val ioctl = IOCTL()
     /** Options port */
     val options = OptionsIO()
-    /** Video registers */
-    val regs = Output(new VideoRegs)
     /** Video port */
     val video = VideoIO()
   })
@@ -69,16 +67,12 @@ class VideoSys extends Module {
     .mapData(Util.swapEndianness) // swap bytes
     .asReadWriteMemIO
 
-  // Latch decoded video registers after they have been downloaded
-  io.regs := RegEnable(VideoRegs.decode(videoRegs.io.regs), VideoSys.DEFAULT_REGS, videoDownloaded)
-
-  // Video timing runs in the video clock domain
   val timing = withClockAndReset(io.videoClock, io.videoReset) {
     // Original video timing
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
-    originalVideoTiming.io.display := io.regs.display
-    originalVideoTiming.io.frontPorch := io.regs.frontPorch
-    originalVideoTiming.io.retrace := io.regs.retrace
+    originalVideoTiming.io.display := io.video.regs.display
+    originalVideoTiming.io.frontPorch := io.video.regs.frontPorch
+    originalVideoTiming.io.retrace := io.video.regs.retrace
 
     // Compatibility video timing
     val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
@@ -103,20 +97,18 @@ class VideoSys extends Module {
     RegNext(timing)
   }
 
-  val video = Wire(new VideoIO)
-  video.clock := io.videoClock
-  video.reset := io.videoReset
-  video.clockEnable := timing.clockEnable
-  video.displayEnable := timing.displayEnable
-  video.changeMode := videoDownloaded || (io.options.compatibility ^ RegNext(io.options.compatibility))
-  video.pos := timing.pos
-  video.hSync := timing.hSync
-  video.vSync := timing.vSync
-  video.hBlank := timing.hBlank
-  video.vBlank := timing.vBlank
-
   // Outputs
-  io.video <> video
+  io.video.clock := io.videoClock
+  io.video.reset := io.videoReset
+  io.video.clockEnable := timing.clockEnable
+  io.video.displayEnable := timing.displayEnable
+  io.video.pos := timing.pos
+  io.video.hSync := timing.hSync
+  io.video.vSync := timing.vSync
+  io.video.hBlank := timing.hBlank
+  io.video.vBlank := timing.vBlank
+  io.video.regs := RegEnable(VideoRegs.decode(videoRegs.io.regs), VideoSys.DEFAULT_REGS, videoDownloaded)
+  io.video.changeMode := videoDownloaded || (io.options.compatibility ^ RegNext(io.options.compatibility))
 }
 
 object VideoSys {
