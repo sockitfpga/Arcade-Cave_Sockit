@@ -39,7 +39,6 @@ import arcadia.mem.ddr.DDR
 import arcadia.mem.sdram.{SDRAM, SDRAMIO}
 import arcadia.mister._
 import cave.fb._
-import cave.gfx.VideoRegs
 import chisel3._
 import chisel3.experimental.FlatIO
 import chisel3.stage._
@@ -69,7 +68,7 @@ class Main extends Module {
     /** IOCTL port */
     val ioctl = IOCTL()
     /** Frame buffer control port */
-    val frameBufferCtrl = FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    val frameBufferCtrl = FrameBufferCtrlIO()
     /** Audio port */
     val audio = Output(SInt(Config.AUDIO_SAMPLE_WIDTH.W))
     /** Video port */
@@ -154,6 +153,7 @@ class Main extends Module {
   systemFrameBuffer.io.enable := io.options.frameBufferEnable.system && memSys.io.ready
   systemFrameBuffer.io.rotate := io.options.rotate
   systemFrameBuffer.io.forceBlank := !memSys.io.ready
+  systemFrameBuffer.io.videoRegs <> videoSys.io.regs
   systemFrameBuffer.io.video <> videoSys.io.video
   systemFrameBuffer.io.frameBufferCtrl <> io.frameBufferCtrl
   systemFrameBuffer.io.frameBuffer <> cave.io.systemFrameBuffer

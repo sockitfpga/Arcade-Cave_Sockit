@@ -37,6 +37,7 @@ import arcadia.gfx.VideoIO
 import arcadia.mem.BurstWriteMemIO
 import arcadia.mister.FrameBufferCtrlIO
 import cave._
+import cave.gfx.VideoRegs
 import chisel3._
 import chisel3.util.ShiftRegister
 
@@ -63,10 +64,12 @@ class SystemFrameBuffer extends Module {
     val rotate = Input(Bool())
     /** Disable the frame buffer output */
     val forceBlank = Input(Bool())
+    /** Video registers */
+    val videoRegs = Input(new VideoRegs)
     /** Video port */
     val video = Flipped(VideoIO())
     /** Frame buffer control port */
-    val frameBufferCtrl = FrameBufferCtrlIO(Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT)
+    val frameBufferCtrl = FrameBufferCtrlIO()
     /** Frame buffer port */
     val frameBuffer = Flipped(new SystemFrameBufferIO)
     /** DDR port */
@@ -82,6 +85,8 @@ class SystemFrameBuffer extends Module {
 
   // Configure the MiSTer frame buffer
   io.frameBufferCtrl.configure(
+    width = io.videoRegs.display.x,
+    height = io.videoRegs.display.y,
     baseAddr = pageFlipper.io.addrRead,
     enable = io.enable,
     rotate = io.rotate,
