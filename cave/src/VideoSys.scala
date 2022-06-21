@@ -36,7 +36,6 @@ import arcadia._
 import arcadia.gfx._
 import arcadia.mem.RegisterFile
 import arcadia.mister._
-import cave.gfx._
 import chisel3._
 import chisel3.util._
 

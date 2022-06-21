@@ -33,11 +33,10 @@
 package cave.fb
 
 import arcadia._
-import arcadia.gfx.VideoIO
+import arcadia.gfx.{VideoIO, VideoRegs}
 import arcadia.mem.BurstWriteMemIO
 import arcadia.mister.FrameBufferCtrlIO
 import cave._
-import cave.gfx.VideoRegs
 import chisel3._
 import chisel3.util.ShiftRegister
 
