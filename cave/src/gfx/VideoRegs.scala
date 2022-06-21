@@ -47,6 +47,30 @@ class VideoRegs extends Bundle {
 
 object VideoRegs {
   /**
+   * Creates a video registers bundle.
+   *
+   * @param width       The screen width.
+   * @param height      The screen height.
+   * @param hFrontPorch The size of the horizontal front porch.
+   * @param vFrontPorch The size of the vertical front porch.
+   * @param hRetrace    The size of the horizontal retrace.
+   * @param vRetrace    The size of the vertical retrace.
+   * @return A video registers bundle.
+   */
+  def apply(width: Int,
+            height: Int,
+            hFrontPorch: Int,
+            vFrontPorch: Int,
+            hRetrace: Int,
+            vRetrace: Int): VideoRegs = {
+    val regs = Wire(new VideoRegs)
+    regs.display := UVec2(width.U, height.U)
+    regs.frontPorch := UVec2(hFrontPorch.U, vFrontPorch.U)
+    regs.retrace := UVec2(hRetrace.U, vRetrace.U)
+    regs
+  }
+
+  /**
    * Decodes the video registers from the given data.
    *
    * {{{
@@ -61,15 +85,13 @@ object VideoRegs {
    * }}}
    *
    * @param data The video registers data.
+   * @return A video registers bundle.
    */
   def decode[T <: Bits](data: Vec[T]): VideoRegs = {
     val regs = Wire(new VideoRegs)
-    regs.display.x := data(0)(8, 0)
-    regs.display.y := data(1)(8, 0)
-    regs.frontPorch.x := data(2)(8, 0)
-    regs.frontPorch.y := data(3)(8, 0)
-    regs.retrace.x := data(4)(8, 0)
-    regs.retrace.y := data(5)(8, 0)
+    regs.display := UVec2(data(0)(8, 0), data(1)(8, 0))
+    regs.frontPorch := UVec2(data(2)(8, 0), data(3)(8, 0))
+    regs.retrace := UVec2(data(4)(8, 0), data(5)(8, 0))
     regs
   }
 }

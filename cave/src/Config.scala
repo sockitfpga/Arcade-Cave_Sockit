@@ -66,8 +66,6 @@ object Config {
 
   /** The number of DIPs registers */
   val DIPS_REGS_COUNT = 4
-  /** The number of video registers */
-  val VIDEO_REGS_COUNT = 8
 
   /** The width of the pulse generated when a coin is inserted */
   val COIN_PULSE_WIDTH = (100000000D / CLOCK_PERIOD).ceil.toInt // 100ms

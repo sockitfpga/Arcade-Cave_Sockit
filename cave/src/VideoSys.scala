@@ -54,32 +54,32 @@ class VideoSys extends Module {
     val ioctl = IOCTL()
     /** Options port */
     val options = OptionsIO()
+    /** Video registers */
+    val regs = Output(new VideoRegs)
     /** Video port */
     val video = VideoIO()
   })
 
+  // Asserted when the video registers have been written to the IOCTL
   val videoDownloaded = Util.falling(io.ioctl.download) && io.ioctl.index === IOCTL.VIDEO_INDEX.U
 
-  val changeMode = videoDownloaded || (io.options.compatibility ^ RegNext(io.options.compatibility))
-
-  // Latch video registers after they have been downloaded
-  val latchVideoRegs = Util.latchSync(videoDownloaded)
-
   // Connect IOCTL to video register file
-  val registerFile = Module(new RegisterFile(IOCTL.DATA_WIDTH, Config.VIDEO_REGS_COUNT))
-  registerFile.io.mem <> io.ioctl.video
+  val videoRegs = Module(new RegisterFile(IOCTL.DATA_WIDTH, VideoSys.VIDEO_REGS_COUNT))
+  videoRegs.io.mem <> io.ioctl.video
     .mapAddr { a => (a >> 1).asUInt } // convert from byte address
-    .mapData { a => a(7, 0) ## a(15, 8) } // swap words
+    .mapData(Util.swapEndianness) // swap bytes
     .asReadWriteMemIO
+
+  // Latch decoded video registers after they have been downloaded
+  io.regs := RegEnable(VideoRegs.decode(videoRegs.io.regs), VideoSys.DEFAULT_REGS, videoDownloaded)
 
   // Video timing runs in the video clock domain
   val timing = withClockAndReset(io.videoClock, io.videoReset) {
     // Original video timing
     val originalVideoTiming = Module(new VideoTiming(Config.originalVideoTimingConfig))
-    val videoRegs = RegEnable(VideoRegs.decode(registerFile.io.regs), VideoSys.DEFAULT_REGS, latchVideoRegs)
-    originalVideoTiming.io.display := videoRegs.display
-    originalVideoTiming.io.frontPorch := videoRegs.frontPorch
-    originalVideoTiming.io.retrace := videoRegs.retrace
+    originalVideoTiming.io.display := io.regs.display
+    originalVideoTiming.io.frontPorch := io.regs.frontPorch
+    originalVideoTiming.io.retrace := io.regs.retrace
 
     // Compatibility video timing
     val compatibilityVideoTiming = Module(new VideoTiming(Config.compatibilityVideoTimingConfig))
@@ -109,7 +109,7 @@ class VideoSys extends Module {
   video.reset := io.videoReset
   video.clockEnable := timing.clockEnable
   video.displayEnable := timing.displayEnable
-  video.changeMode := changeMode
+  video.changeMode := videoDownloaded || (io.options.compatibility ^ RegNext(io.options.compatibility))
   video.pos := timing.pos
   video.hSync := timing.hSync
   video.vSync := timing.vSync
@@ -121,6 +121,16 @@ class VideoSys extends Module {
 }
 
 object VideoSys {
-  /** Default video register values */
-  val DEFAULT_REGS = VideoRegs.decode(VecInit(320.U, 240.U, 36.U, 12.U, 20.U, 2.U, 0.U, 0.U))
+  /** The number of video registers */
+  val VIDEO_REGS_COUNT = 8
+
+  /** Default video registers */
+  val DEFAULT_REGS = VideoRegs(
+    width = Config.SCREEN_WIDTH,
+    height = Config.SCREEN_HEIGHT,
+    hFrontPorch = 36,
+    vFrontPorch = 12,
+    hRetrace = 20,
+    vRetrace = 2
+  )
 }

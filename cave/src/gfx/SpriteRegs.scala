@@ -69,6 +69,7 @@ object SpriteRegs {
    * }}}
    *
    * @param data The sprite registers data.
+   * @return A sprite registers bundle.
    */
   def decode[T <: Bits](data: Vec[T]): SpriteRegs = {
     val regs = Wire(new SpriteRegs)

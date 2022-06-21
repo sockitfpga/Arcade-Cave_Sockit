@@ -75,6 +75,7 @@ object LayerRegs {
    * }}}
    *
    * @param data The layer registers data.
+   * @return A layer registers bundle.
    */
   def decode[T <: Bits](data: Vec[T]): LayerRegs = {
     val regs = Wire(new LayerRegs)
