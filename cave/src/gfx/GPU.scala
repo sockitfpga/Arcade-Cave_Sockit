@@ -70,6 +70,19 @@ class GPU extends Module {
     val rgb = Output(RGB(Config.RGB_OUTPUT_BPP.W))
   })
 
+  def frameBufferAddr(pos: Vec2[UInt], flip: Bool, rotate: Bool): UInt = {
+    val width = io.video.regs.display.x
+    val height = io.video.regs.display.y
+    val x = pos.x(Config.FRAME_BUFFER_ADDR_WIDTH_X - 1, 0)
+    val y = pos.y(Config.FRAME_BUFFER_ADDR_WIDTH_Y - 1, 0)
+    val x_ = width - x - 1.U
+    val y_ = height - y - 1.U
+    Mux(rotate,
+      Mux(flip, (x * height) + y_, (x_ * height) + y),
+      Mux(flip, (y_ * width) + x_, (y * width) + x)
+    )
+  }
+
   // Sprite processor
   val spriteProcessor = Module(new SpriteProcessor)
   spriteProcessor.io.ctrl <> io.spriteCtrl
@@ -100,7 +113,7 @@ class GPU extends Module {
 
     // Decode color mixer data and write it to the system frame buffer
     io.systemFrameBuffer.wr := RegNext(io.video.clockEnable && io.video.displayEnable)
-    io.systemFrameBuffer.addr := RegNext(GPU.frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
+    io.systemFrameBuffer.addr := RegNext(frameBufferAddr(io.video.pos, io.options.flip, io.options.rotate))
     io.systemFrameBuffer.mask := 0xf.U // 4 bytes
     io.systemFrameBuffer.din := RegNext(GPU.decodeABGR(colorMixer.io.dout))
 
