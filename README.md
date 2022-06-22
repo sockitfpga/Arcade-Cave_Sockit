@@ -1,3 +1,9 @@
+# Cave 68k for Sockit (Mister)
+
+Ported from https://github.com/MiSTer-devel/Arcade-Cave_MiSTer
+
+Follows original readme file.
+
 # Cave 68k
 
 This project contains the MiSTer core for Cave's first-generation 68k arcade hardware.
